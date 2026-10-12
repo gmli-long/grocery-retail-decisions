@@ -1,0 +1,46 @@
+{
+  "results": {
+    "dirty/persistence": {
+      "train": "dirty",
+      "model": "persistence",
+      "MAE": 1282.9,
+      "RMSE": 2374.6,
+      "MAPE": 252.5
+    },
+    "dirty/weekday_naive": {
+      "train": "dirty",
+      "model": "weekday_naive",
+      "MAE": 840.4,
+      "RMSE": 2292.8,
+      "MAPE": 227.12
+    },
+    "dirty/random_forest": {
+      "train": "dirty",
+      "model": "random_forest",
+      "MAE": 1410.7,
+      "RMSE": 1833.5,
+      "MAPE": 303.71
+    },
+    "clean/persistence": {
+      "train": "clean",
+      "model": "persistence",
+      "MAE": 360.8,
+      "RMSE": 435.6,
+      "MAPE": 79.95
+    },
+    "clean/weekday_naive": {
+      "train": "clean",
+      "model": "weekday_naive",
+      "MAE": 274.3,
+      "RMSE": 342.5,
+      "MAPE": 57.29
+    },
+    "clean/random_forest": {
+      "train": "clean",
+      "model": "random_forest",
+      "MAE": 284.6,
+      "RMSE": 345.4,
+      "MAPE": 65.32
+    }
+  }
+}

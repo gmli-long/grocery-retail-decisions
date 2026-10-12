@@ -1,0 +1,39 @@
+# ============================================================
+# 白名单策略：本仓库只公开三个 challenge，其余一律忽略。
+# 根目录下的爬虫、简历、调试脚本、登录态等均不进版本库，
+# 从源头杜绝敏感信息（cookies / chrome 配置 / 登录脚本）泄露。
+# ============================================================
+
+# 1) 默认忽略根目录下所有条目（文件 + 目录）
+/*
+
+# 2) 仅放行需要公开的内容
+!.gitignore
+!README.md
+!challenge_01_spaghetti_schema/
+!challenge_02_errors_integrity/
+!challenge_03_data_signal/
+
+# 3) 三个 challenge 内部也要排除的运行时产物
+#    Python 缓存
+__pycache__/
+*.py[cod]
+*.pyo
+.ipynb_checkpoints/
+
+#    本地数据库 / 快照产物（由脚本生成，无需入库）
+*.sqlite
+*.sqlite3
+*.db
+
+#    运行日志
+*.log
+
+#    依赖缓存
+node_modules/
+
+#    各类临时 / 缓存产物（鲁棒兜底，避免误提交）
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak

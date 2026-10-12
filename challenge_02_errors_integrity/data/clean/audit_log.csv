@@ -1,0 +1,11 @@
+step,table,column,operation,rows,rationale
+0,categories,name,standardize label,2,"naming had 4 distinct conventions (Cat-One, category_2, Category_N); normalized to Category_N to remove label drift and enable joins-by-name."
+1,sales,txn_id,deduplicate (keep-most-valid),50,50 txn_ids were stored twice (47 identical + 3 conflicting). Kept the member with valid store/product and consistent line_amount per id.
+2,sales,qty,scale outlier /1000,29,qty in {1000..4000} appears only where line_amount is already qty*price; the true count is qty/1000 (evidence: amount invariant holds).
+3,sales,line_amount,recompute qty*unit_price,13,"14 line_amounts were 100x the true qty*unit_price; line_amount is a derived field, so it is recomputed from the (trusted) qty & unit_price."
+4,sales,qty,recover = line_amount/unit_price,56,qty derived exactly from line_amount/unit_price (counts are integers).
+5,sales,unit_price,recover = line_amount/qty,56,"unit_price derived exactly from line_amount/qty (no guess, full precision)."
+6,sales,txn_date,recover via txn_id block (ffill),29,txn_date is a step-function of txn_id (contiguous daily blocks); forward-fill on the dense txn_id axis recovers the exact date.
+7,sales,store_id,recover via store block order,13,"store_id=9999 is a malformed key; the store cycle (1..5 per day, contiguous) identically determines the true store from the txn position."
+8,sales,product_id,impute (empirical-frequency sampling),28,product_id has no association with any observed column (uniform iid); reassigned by seeded sampling from P(product) to keep the marginal distribution unbiased and remain referentially valid.
+9,sales,line_amount,normalize = qty*unit_price,0,re-express line_amount as the canonical qty*unit_price for full self-consistency (only the x100 rows change meaningfully).

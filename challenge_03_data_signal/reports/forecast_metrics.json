@@ -1,0 +1,117 @@
+{
+  "train_end": "2021-12-31",
+  "total": {
+    "persistence": {
+      "MAE": 1935.8360821917804,
+      "RMSE": 2323.859044911676,
+      "MAPE": 24.663702248839183
+    },
+    "seasonal_naive": {
+      "MAE": 1801.059780821918,
+      "RMSE": 2258.7599762041823,
+      "MAPE": 20.49206304230889
+    },
+    "sarima": {
+      "MAE": 1356.9605900498607,
+      "RMSE": 1743.0733784881281,
+      "MAPE": 15.057229571110417
+    },
+    "sarimax": {
+      "MAE": 909.6242599226567,
+      "RMSE": 1285.9233774303814,
+      "MAPE": 10.450168115447722
+    },
+    "sarima_aic": 25053.232747592774,
+    "sarimax_aic": 24990.95652722974
+  },
+  "category": [
+    {
+      "level": "category",
+      "name": "Beverages",
+      "sarima_MAPE": 28.32344517309887,
+      "sarimax_MAPE": 18.31424881913772,
+      "sarimax_RMSE": 343.68818273388,
+      "sarimax_MAE": 251.70461157776546,
+      "naive_MAPE": 32.968858468087625,
+      "sarimax_aic": 21219.466141747216,
+      "n_test": 365
+    },
+    {
+      "level": "category",
+      "name": "Bakery",
+      "sarima_MAPE": 78.30495214122615,
+      "sarimax_MAPE": 30.42934170450316,
+      "sarimax_RMSE": 858.485984136591,
+      "sarimax_MAE": 645.4154752858683,
+      "naive_MAPE": 76.28570525078572,
+      "sarimax_aic": 22879.739229250034,
+      "n_test": 365
+    },
+    {
+      "level": "category",
+      "name": "Meat",
+      "sarima_MAPE": 29.000097907388785,
+      "sarimax_MAPE": 17.323282807646528,
+      "sarimax_RMSE": 574.9810283569964,
+      "sarimax_MAE": 408.02360058997084,
+      "naive_MAPE": 32.674848904088094,
+      "sarimax_aic": 23083.45791276276,
+      "n_test": 365
+    },
+    {
+      "level": "category",
+      "name": "Produce",
+      "sarima_MAPE": 24.923250449218674,
+      "sarimax_MAPE": 17.80535296515848,
+      "sarimax_RMSE": 533.0209477066222,
+      "sarimax_MAE": 416.5006039520653,
+      "naive_MAPE": 27.875218516091117,
+      "sarimax_aic": 22313.375331237137,
+      "n_test": 365
+    }
+  ],
+  "store": [
+    {
+      "level": "store",
+      "name": "Seattle (L)",
+      "sarima_MAPE": 20.92006666742895,
+      "sarimax_MAPE": 17.494408704141414,
+      "sarimax_RMSE": 610.4734883757619,
+      "sarimax_MAE": 456.2381606499077,
+      "naive_MAPE": 29.984826886269396,
+      "sarimax_aic": 22560.809779467396,
+      "n_test": 365
+    },
+    {
+      "level": "store",
+      "name": "Portland (M)",
+      "sarima_MAPE": 18.86221516848914,
+      "sarimax_MAPE": 16.92890504936753,
+      "sarimax_RMSE": 664.0419219815395,
+      "sarimax_MAE": 519.9547394292786,
+      "naive_MAPE": 26.43740735988567,
+      "sarimax_aic": 23170.45272293896,
+      "n_test": 365
+    },
+    {
+      "level": "store",
+      "name": "Boise (S)",
+      "sarima_MAPE": 18.991848336778823,
+      "sarimax_MAPE": 15.76988167533147,
+      "sarimax_RMSE": 575.5071970460622,
+      "sarimax_MAE": 431.0624832874414,
+      "naive_MAPE": 25.765590234182273,
+      "sarimax_aic": 22545.663050519845,
+      "n_test": 365
+    }
+  ],
+  "seasonal_strength": {
+    "Beverages": 0.30798675433493894,
+    "Bakery": 0.276899409844355,
+    "Meat": 0.24148212499052513,
+    "Produce": 0.3322610305659013,
+    "Seattle": 0.32696739773676475,
+    "Portland": 0.31762311308721825,
+    "Boise": 0.36246765309525897
+  }
+}

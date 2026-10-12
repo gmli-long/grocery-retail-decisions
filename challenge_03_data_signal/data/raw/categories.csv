@@ -1,0 +1,5 @@
+category_id,name,seasonal_flag,perishability
+1,Beverages,1,Medium
+2,Bakery,1,High
+3,Meat,1,High
+4,Produce,1,High

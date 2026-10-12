@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>挑战 01 — 执行摘要：从数据混乱到分析清晰</title>
+<style>
+  :root {
+    --ink:#1a2332; --sub:#5b6472; --line:#e6e9ef; --accent:#2c7fb8;
+    --accent2:#f03b20; --bg:#f6f8fa; --card:#ffffff; --amber:#fef5e7; --blue:#eaf2f8;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:"Segoe UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+         color:var(--ink); background:var(--bg); line-height:1.65; }
+  .wrap { max-width:960px; margin:0 auto; padding:40px 28px 80px; }
+  header.hero { background:linear-gradient(135deg,#1b4f72 0%,#2c7fb8 60%,#41b6c4 100%);
+                color:#fff; border-radius:14px; padding:34px 36px; }
+  header.hero h1 { margin:0 0 8px; font-size:28px; letter-spacing:.5px; }
+  header.hero p { margin:0; opacity:.92; font-size:15px; }
+  .kpis { display:flex; flex-wrap:wrap; gap:14px; margin:22px 0 8px; }
+  .kpi { flex:1 1 150px; background:var(--card); border:1px solid var(--line);
+         border-radius:12px; padding:16px 18px; }
+  .kpi .v { font-size:26px; font-weight:700; color:var(--accent); }
+  .kpi .l { font-size:12px; color:var(--sub); margin-top:2px; }
+  h2 { font-size:20px; margin:38px 0 6px; padding-bottom:8px; border-bottom:2px solid var(--line); }
+  h2 .no { color:var(--accent); margin-right:8px; }
+  h3 { font-size:15px; margin:22px 0 8px; color:#1b4f72; }
+  p { margin:8px 0; color:var(--ink); }
+  .muted { color:var(--sub); font-size:13.5px; }
+  figure { margin:16px 0; text-align:center; }
+  figure img { max-width:100%; border:1px solid var(--line); border-radius:10px;
+               background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  figcaption { font-size:12.5px; color:var(--sub); margin-top:6px; }
+  table { width:100%; border-collapse:collapse; margin:14px 0; background:var(--card);
+          border:1px solid var(--line); border-radius:10px; overflow:hidden; font-size:14px; }
+  th,td { padding:10px 12px; text-align:left; border-bottom:1px solid var(--line); }
+  th { background:#eef3f8; color:#1b4f72; font-weight:600; }
+  tr:last-child td { border-bottom:none; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .insight { background:var(--blue); border-left:4px solid var(--accent);
+             border-radius:8px; padding:12px 16px; margin:10px 0; font-size:14px; }
+  .callout { background:var(--amber); border-left:4px solid #f0a32c; border-radius:8px;
+             padding:12px 16px; margin:10px 0; }
+  code { background:#eef1f5; padding:1px 6px; border-radius:5px; font-family:Consolas,monospace;
+         font-size:13px; }
+  ul { padding-left:22px; }
+  li { margin:5px 0; }
+  .footer { margin-top:40px; color:var(--sub); font-size:12.5px; text-align:center;
+            border-top:1px solid var(--line); padding-top:16px; }
+  @media (max-width:640px){ .grid2{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>挑战 01 · 执行摘要</h1>
+  <p>《杂货零售——数据驱动》系列：将分散的电子表格，转化为结构化、可查询、可复现的关系型数据底座，并验证其分析与建模就绪度。</p>
+</header>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">7</div><div class="l">源平面文件（含 4 季度销售）</div></div>
+  <div class="kpi"><div class="v">11</div><div class="l">规范化实体（7 维 + 4 事实）</div></div>
+  <div class="kpi"><div class="v">53,286</div><div class="l">票行明细行（0 异常）</div></div>
+  <div class="kpi"><div class="v">$512k</div><div class="l">2024 年总营收</div></div>
+  <div class="kpi"><div class="v">33.1%</div><div class="l">基线模型 MAPE（vs 48.5% 朴素）</div></div>
+</div>
+
+<h2><span class="no">1</span>数据管道概览</h2>
+<p>四个平面文件经一套可复现的 ETL 脚本流入规范模式：</p>
+<table>
+  <thead><tr><th>阶段</th><th>输入</th><th>处理</th><th>输出</th></tr></thead>
+  <tbody>
+    <tr><td>接入</td><td>products / promotions / inventory / sales×4</td><td>读取 4 种异构日期格式</td><td>统一 pandas 数据帧</td></tr>
+    <tr><td>清洗与类型强制</td><td>—</td><td>数值/日期强制、异常行标记</td><td>规范化 DataFrame</td></tr>
+    <tr><td>建模</td><td>—</td><td>维度去重 + 代理键赋值 + 外键解析</td><td>11 张表</td></tr>
+    <tr><td>校验</td><td>—</td><td>主键/外键/CHECK 约束审计、计数日志</td><td><code>REJECTED rows: 0</code></td></tr>
+    <tr><td>加载</td><td>—</td><td>PostgreSQL（或 SQLite 回退）</td><td><code>challenge_01.sqlite</code></td></tr>
+  </tbody>
+</table>
+<p class="muted">行数对账（ETL 日志）：products=60 · promotions=530 · stores=3 · cashiers=8 · receipts=13,259 · line_items=53,286 · inventory_snapshots=2,160 —— 与 readme.txt 完全一致。</p>
+
+<h2><span class="no">2</span>ERD 与模式设计</h2>
+<p>逆向工程识别出 7 张维度表与 4 张事实表；<code>products</code> 是汇聚散落属性的中枢，<code>receipts</code>（票头）与 <code>line_items</code>（票行）分离，去掉每行重复的 ~10 个描述列。</p>
+<figure>
+  <img src="figures/erd.png" alt="ERD">
+  <figcaption>规范化 ERD（蓝色=维度，琥珀色=事实，1 → N 用红字标注）</figcaption>
+</figure>
+<div class="callout"><b>关键建模决策：</b>① 部门→类目→商品三层消除传递依赖；② 票头/票行分离消除票级属性重复；③ 丢弃可推导冗余列 <code>weekend_flag</code> 与库存 <code>unit_cost/value</code>；④ 刻意折中——保留自然码主键用于可对账、票头枚举用 CHECK 而非过度拆表。完整理由见 <a href="../docs/architecture.md">architecture.md</a>。</div>
+
+<h2><span class="no">3</span>EDA 亮点</h2>
+<div class="grid2">
+  <figure><img src="figures/fig1_department_revenue.png" alt="部门营收"><figcaption>部门营收分布</figcaption></figure>
+  <figure><img src="figures/fig3_store_segment.png" alt="门店×客群"><figcaption>门店 × 客群</figcaption></figure>
+</div>
+<div class="insight"><b>品类结构：</b>Grocery 是绝对主力（≈$174k，占 34%），Wellness / Meat-Seafood / Dairy / Produce 构成第二梯队；三店体量几乎一致，会员贡献稳定更高。</div>
+
+<div class="grid2">
+  <figure><img src="figures/fig2_monthly_trend.png" alt="月度趋势"><figcaption>月度营收与促销占比</figcaption></figure>
+  <figure><img src="figures/fig4_promo_lift.png" alt="促销 lift"><figcaption>促销 lift（行均营收）</figcaption></figure>
+</div>
+<div class="insight"><b>促销与时间：</b>月营收在 $40k–$45k 窄幅波动、无明显季节性；促销成交占比稳定在 8%–11%。<b>BOGO50</b> 把行均数量从 1.29 拉到 2.16、行均营收最高，属「提量」型；PCT_OFF / LOYALTY_PCT 属「降价换量」型。</div>
+
+<div class="grid2">
+  <figure><img src="figures/fig5_member_mix.png" alt="会员占比"><figcaption>会员 vs 非会员</figcaption></figure>
+  <figure><img src="figures/fig6_top_products.png" alt="Top 商品"><figcaption>Top 10 商品</figcaption></figure>
+</div>
+<div class="insight"><b>客群与单品：</b>会员贡献 ≈59% 营收；头号单品 Sun Valley Basmati Rice（$29k）领先，Top10 集中于 Grocery 主食与高单价 Wellness / Meat-Seafood。</div>
+
+<h2><span class="no">4</span>基线模型结果</h2>
+<p>目标：按「门店 × 日」粒度预测营收。时间切分——训练 2024-01 至 10 月，测试 11–12 月（183 个门店-日，覆盖 100%）。</p>
+<table>
+  <thead><tr><th>模型</th><th>MAE ($)</th><th>RMSE ($)</th><th>MAPE (%)</th></tr></thead>
+  <tbody>
+    <tr><td>persistence（昨日值）</td><td>176.1</td><td>224.1</td><td>41.42</td></tr>
+    <tr><td>weekday_naive（上周同 weekday）</td><td>197.6</td><td>241.4</td><td>48.52</td></tr>
+    <tr><td><b>random_forest（日历特征）</b></td><td><b>135.8</b></td><td><b>170.6</b></td><td><b>33.05</b></td></tr>
+  </tbody>
+</table>
+<figure><img src="figures/fig7_forecast.png" alt="预测对比"><figcaption>测试窗口（Store 101，11–12 月）实际 vs 预测</figcaption></figure>
+<p class="muted"><b>假设与局限：</b>仅用日历特征；日粒度噪声大（单店日均 ≈$156），故 MAPE 绝对水平偏高，聚合到周会显著下降；窗口仅一年，无法验证跨年季节性。RandomForest 比最优朴素基线提升 <b>15.5 个百分点</b>，<code>dayofyear</code> 为首要特征。</p>
+
+<h2><span class="no">5</span>关键要点与下一步（挑战 02）</h2>
+<ul>
+  <li><b>可复现</b>：一条命令（<code>python scripts/load_data.py</code>）即可从 7 个文件重建整个数据库，行数与源文件严格一致、0 异常行。</li>
+  <li><b>可追踪</b>：ETL 逐表记录 source_rows / loaded，异常行落盘 <code>reports/etl/rejected_rows.csv</code>，为审计铺路。</li>
+  <li><b>分析与建模就绪</b>：6 张 EDA 图 + 1 个优于朴素基线的预测模型，均由规范 schema 的标准 SQL 驱动。</li>
+</ul>
+<div class="callout"><b>挑战 02（完整性 → 错误）衔接：</b>规范模式与严格约束本身就是数据质量的第一道防线。ETL 已预留「不可解析日期 / 外键孤儿 / 数值越界 / 重复键」四类拒绝路径，可在真实数据质量压力下直接复用并量化错误。</div>
+
+<div class="footer">挑战 01 · 交付物完整清单见根目录 README.md</div>
+</div>
+</body>
+</html>

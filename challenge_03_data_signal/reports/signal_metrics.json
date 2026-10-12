@@ -1,0 +1,45 @@
+{
+  "n_days": 1826,
+  "date_range": [
+    "2018-01-01",
+    "2022-12-31"
+  ],
+  "total_revenue": 15609015.92,
+  "dominant_periods_days": [
+    365.2,
+    7.0,
+    3.5,
+    2.3,
+    10.1,
+    28.1
+  ],
+  "seasonal_strength_total": 0.376,
+  "seasonal_strength_category": {
+    "Beverages": 0.30798675433493894,
+    "Bakery": 0.276899409844355,
+    "Meat": 0.24148212499052513,
+    "Produce": 0.3322610305659013
+  },
+  "seasonal_strength_store": {
+    "1": 0.32696739773676475,
+    "2": 0.31762311308721825,
+    "3": 0.36246765309525897
+  },
+  "price_elasticity_corr": {
+    "Beverages": 0.007,
+    "Bakery": -0.014,
+    "Meat": 0.02,
+    "Produce": -0.006
+  },
+  "holiday_stats": {
+    "holiday_mean": 9577.154098360654,
+    "nonholiday_mean": 8512.639954674221,
+    "uplift_pct": 12.505100055381945
+  },
+  "anomaly_stats": {
+    "n_anomalies": 18,
+    "n_hits_in_holiday": 12,
+    "precision_vs_holiday": 0.667,
+    "n_holidays": 61
+  }
+}

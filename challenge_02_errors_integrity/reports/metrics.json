@@ -1,0 +1,135 @@
+{
+  "n_sales_raw": 2859,
+  "n_sales_clean": 2809,
+  "rows_dropped": 50,
+  "total_error_units": 307,
+  "findings": {
+    "missing_txn_date": "29",
+    "missing_qty": "57",
+    "missing_unit_price": "56",
+    "missing_line_amount": "0",
+    "dup_txn_id": 50,
+    "dup_full_row": 47,
+    "store_orphans": 14,
+    "product_orphans": 29,
+    "category_orphans": 0,
+    "qty_outliers_ge1000": 29,
+    "qty_nonpositive": 0,
+    "price_nonpositive": 0,
+    "amount_mismatch": 43,
+    "unparseable_date": 0,
+    "date_min": "2024-01-01 00:00:00",
+    "date_max": "2024-02-29 00:00:00",
+    "products_dup_id": 0,
+    "vendors_dup_id": 0,
+    "stores_dup_id": 0,
+    "categories_dup_id": 0,
+    "category_name_inconsistent": 2,
+    "n_sales": 2859
+  },
+  "change_log": [
+    {
+      "step": 0,
+      "table": "categories",
+      "column": "name",
+      "operation": "standardize label",
+      "rows": 2,
+      "rationale": "naming had 4 distinct conventions (Cat-One, category_2, Category_N); normalized to Category_N to remove label drift and enable joins-by-name."
+    },
+    {
+      "step": 1,
+      "table": "sales",
+      "column": "txn_id",
+      "operation": "deduplicate (keep-most-valid)",
+      "rows": 50,
+      "rationale": "50 txn_ids were stored twice (47 identical + 3 conflicting). Kept the member with valid store/product and consistent line_amount per id."
+    },
+    {
+      "step": 2,
+      "table": "sales",
+      "column": "qty",
+      "operation": "scale outlier /1000",
+      "rows": 29,
+      "rationale": "qty in {1000..4000} appears only where line_amount is already qty*price; the true count is qty/1000 (evidence: amount invariant holds)."
+    },
+    {
+      "step": 3,
+      "table": "sales",
+      "column": "line_amount",
+      "operation": "recompute qty*unit_price",
+      "rows": 13,
+      "rationale": "14 line_amounts were 100x the true qty*unit_price; line_amount is a derived field, so it is recomputed from the (trusted) qty & unit_price."
+    },
+    {
+      "step": 4,
+      "table": "sales",
+      "column": "qty",
+      "operation": "recover = line_amount/unit_price",
+      "rows": 56,
+      "rationale": "qty derived exactly from line_amount/unit_price (counts are integers)."
+    },
+    {
+      "step": 5,
+      "table": "sales",
+      "column": "unit_price",
+      "operation": "recover = line_amount/qty",
+      "rows": 56,
+      "rationale": "unit_price derived exactly from line_amount/qty (no guess, full precision)."
+    },
+    {
+      "step": 6,
+      "table": "sales",
+      "column": "txn_date",
+      "operation": "recover via txn_id block (ffill)",
+      "rows": 29,
+      "rationale": "txn_date is a step-function of txn_id (contiguous daily blocks); forward-fill on the dense txn_id axis recovers the exact date."
+    },
+    {
+      "step": 7,
+      "table": "sales",
+      "column": "store_id",
+      "operation": "recover via store block order",
+      "rows": 13,
+      "rationale": "store_id=9999 is a malformed key; the store cycle (1..5 per day, contiguous) identically determines the true store from the txn position."
+    },
+    {
+      "step": 8,
+      "table": "sales",
+      "column": "product_id",
+      "operation": "impute (empirical-frequency sampling)",
+      "rows": 28,
+      "rationale": "product_id has no association with any observed column (uniform iid); reassigned by seeded sampling from P(product) to keep the marginal distribution unbiased and remain referentially valid."
+    },
+    {
+      "step": 9,
+      "table": "sales",
+      "column": "line_amount",
+      "operation": "normalize = qty*unit_price",
+      "rows": 0,
+      "rationale": "re-express line_amount as the canonical qty*unit_price for full self-consistency (only the x100 rows change meaningfully)."
+    }
+  ],
+  "validation": {
+    "no_null_txn_date": true,
+    "no_null_qty": true,
+    "no_null_price": true,
+    "no_null_amount": true,
+    "no_dup_txn_id": true,
+    "txn_id_dense": true,
+    "store_refs_valid": true,
+    "product_refs_valid": true,
+    "qty_in_1_4": true,
+    "qty_integer": true,
+    "price_positive": true,
+    "amount_consistent": true,
+    "date_in_window": true,
+    "date_monotonic_tid": true,
+    "products_clean": true,
+    "vendors_clean": true,
+    "stores_clean": true,
+    "categories_clean": true
+  },
+  "validation_passed": true,
+  "revenue_raw": 265880.206971915,
+  "revenue_clean": 183483.1798908807
+}
