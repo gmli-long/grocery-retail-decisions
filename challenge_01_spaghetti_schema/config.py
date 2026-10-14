@@ -9,11 +9,13 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
-# Source CSV directory. The fallback is the author's local Kaggle cache; anyone
-# forking the repo should set CHALLENGE_01_DATA_DIR (or --data-dir) to their own
-# location instead of editing this file.
+# Source CSV directory. Defaults to the standard kagglehub cache location,
+# resolved from the user's home directory so it works on any machine that
+# fetched the dataset with `kagglehub` — not just the author's machine. Set
+# CHALLENGE_01_DATA_DIR (or --data-dir) to point elsewhere without editing.
 DEFAULT_DATA_DIR = os.environ.get(
     "CHALLENGE_01_DATA_DIR",
-    r"C:\Users\21597\.cache\kagglehub\competitions"
-    r"\challenge-01-spaghetti-schema-2026\Callenge Data Sets\Challenge_01_data_V1_0",
+    str(Path.home() / ".cache" / "kagglehub" / "competitions"
+        / "challenge-01-spaghetti-schema-2026" / "Callenge Data Sets"
+        / "Challenge_01_data_V1_0"),
 )

@@ -16,6 +16,7 @@ count, and writes any rejected / anomalous rows to reports/etl/rejected_*.csv.
 import argparse
 import logging
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -67,8 +68,10 @@ class RejectionLog:
 
     def add(self, table, reason, df):
         if df is not None and len(df) > 0:
-            for _, r in df.iterrows():
-                self.rows.append({"table": table, "reason": reason, "sample": dict(r)})
+            self.rows.extend(
+                {"table": table, "reason": reason, "sample": rec}
+                for rec in df.to_dict("records")
+            )
 
     def is_empty(self):
         return len(self.rows) == 0
@@ -124,6 +127,9 @@ def transform(data_dir: Path, rej: RejectionLog):
         "unit_cost": _num(p["unit_cost"]).round(2),
         "pack_size": _num(p["pack_size"]).astype("Int64"),
     })
+    # drop rows whose price/cost failed numeric coercion (NOT NULL columns)
+    products = products[products["regular_price"].notna()
+                        & products["unit_cost"].notna()].reset_index(drop=True)
     rej.add("products", "duplicate upc", products[products.duplicated("product_upc")])
     products = products.drop_duplicates("product_upc", keep="first")
 
@@ -165,17 +171,21 @@ def transform(data_dir: Path, rej: RejectionLog):
     stores = (inv[["store_id", "store_name", "store_address", "store_city",
                    "store_state", "store_zip"]].drop_duplicates()
               .sort_values("store_id").reset_index(drop=True))
-    stores["store_id"] = _num(stores["store_id"]).astype("int16")
+    stores["store_id"] = _num(stores["store_id"])
+    rej.add("stores", "non-numeric store_id", stores[stores["store_id"].isna()])
+    stores = stores[stores["store_id"].notna()].reset_index(drop=True)
+    stores["store_id"] = stores["store_id"].astype("int16")
     tables["stores"] = stores
 
     snap = pd.DataFrame({
         "snapshot_date": pd.to_datetime(inv["snapshot_date"], errors="coerce"),
-        "store_id": _num(inv["store_id"]).astype("int16"),
+        "store_id": _num(inv["store_id"]),
         "product_upc": inv["product_upc"],
-        "on_hand_qty": _num(inv["on_hand_qty"]).astype("int32"),
+        "on_hand_qty": _num(inv["on_hand_qty"]),
     })
     bad_oh = snap["on_hand_qty"].isna() | (snap["on_hand_qty"] < 0)
-    orphan = ~snap["product_upc"].isin(set(products["product_upc"]))
+    orphan = (~snap["product_upc"].isin(set(products["product_upc"]))
+              | ~snap["store_id"].isin(set(stores["store_id"])))
     bad_date = snap["snapshot_date"].isna()
     dup = snap.duplicated(["snapshot_date", "store_id", "product_upc"])
     rej.add("inventory_snapshots", "on_hand negative/null", snap[bad_oh])
@@ -184,6 +194,8 @@ def transform(data_dir: Path, rej: RejectionLog):
     rej.add("inventory_snapshots", "duplicate snapshot key", snap[dup])
     snap = snap[~(bad_oh | orphan | bad_date | dup)].reset_index(drop=True)
     snap["snapshot_id"] = np.arange(1, len(snap) + 1, dtype=np.int64)
+    snap["store_id"] = snap["store_id"].astype("int16")
+    snap["on_hand_qty"] = snap["on_hand_qty"].astype("int32")
     tables["inventory_snapshots"] = snap
 
     # ---- 4) sales -> cashiers, receipts, line_items -------------------------
@@ -209,23 +221,25 @@ def transform(data_dir: Path, rej: RejectionLog):
                      sale_datetime=("_dt", "first"),
                      tender_type=("tender_type", "first"),
                      customer_segment=("customer_segment", "first")))
-    receipts["store_id"] = _num(receipts["store_id"]).astype("int16")
+    receipts["store_id"] = _num(receipts["store_id"])
     receipts["cashier_id"] = receipts["cashier_name"].map(cashier_id)
     ok = (receipts["tender_type"].isin(VALID_TENDER)
           & receipts["customer_segment"].isin(VALID_SEGMENT)
+          & receipts["store_id"].notna()
           & receipts["store_id"].isin(set(stores["store_id"]))
           & receipts["cashier_id"].notna()
           & receipts["sale_datetime"].notna())
     rej.add("receipts", "invalid tender/segment/store/cashier", receipts[~ok])
     receipts = receipts[ok].reset_index(drop=True)
+    receipts["store_id"] = receipts["store_id"].astype("int16")
     tables["receipts"] = receipts[["receipt_id", "store_id", "cashier_id",
                                    "sale_datetime", "tender_type", "customer_segment"]]
 
     li = pd.DataFrame({
         "receipt_id": sales["receipt_id"],
-        "line_number": _num(sales["line_number"]).astype("int16"),
+        "line_number": _num(sales["line_number"]),
         "product_upc": sales["product_upc"],
-        "quantity": _num(sales["quantity"]).astype("int16"),
+        "quantity": _num(sales["quantity"]),
         "promo_id": sales["promo_id"].replace("", None),
         "unit_price_effective": _num(sales["unit_price_effective"]).round(2),
         "line_subtotal": _num(sales["line_subtotal"]).round(2),
@@ -235,6 +249,7 @@ def transform(data_dir: Path, rej: RejectionLog):
     promo_set = set(tables["promotions"]["promo_id"])
     bad_promo = li["promo_id"].notna() & ~li["promo_id"].isin(promo_set)
     bad_qty = li["quantity"].isna() | (li["quantity"] <= 0)
+    bad_line = li["line_number"].isna()
     bad_upc = ~li["product_upc"].isin(set(products["product_upc"]))
     bad_rcpt = ~li["receipt_id"].isin(set(receipts["receipt_id"]))
     # numeric sanity: line_subtotal == unit_price_effective * quantity
@@ -243,13 +258,16 @@ def transform(data_dir: Path, rej: RejectionLog):
     dup = li.duplicated(["receipt_id", "line_number"])
     rej.add("line_items", "promo_id orphan", li[bad_promo])
     rej.add("line_items", "quantity <= 0", li[bad_qty])
+    rej.add("line_items", "line_number null", li[bad_line])
     rej.add("line_items", "product orphan", li[bad_upc])
     rej.add("line_items", "receipt orphan", li[bad_rcpt])
     rej.add("line_items", "subtotal != price*qty", li[bad_calc])
     rej.add("line_items", "duplicate (receipt, line)", li[dup])
-    keep = ~(bad_promo | bad_qty | bad_upc | bad_rcpt | bad_calc | dup)
+    keep = ~(bad_promo | bad_qty | bad_line | bad_upc | bad_rcpt | bad_calc | dup)
     li = li[keep].reset_index(drop=True)
     li["line_item_id"] = np.arange(1, len(li) + 1, dtype=np.int64)
+    li["line_number"] = li["line_number"].astype("int16")
+    li["quantity"] = li["quantity"].astype("int16")
     tables["line_items"] = li
 
     return tables
@@ -297,8 +315,10 @@ class SQLiteBackend:
         self.conn.execute("PRAGMA foreign_keys=ON")
 
     def execute_script(self, sql_path):
-        # SQLite uses a reduced schema (same model, sqlite-flavoured types)
-        self.conn.executescript(_SQLITE_DDL)
+        # Single canonical schema: run sql/ddl.sql translated to SQLite syntax,
+        # so the CHECK constraints can't drift from the PostgreSQL DDL.
+        ddl = Path(sql_path).read_text(encoding="utf-8")
+        self.conn.executescript(_to_sqlite(ddl))
 
     def load(self, table, df):
         import datetime as _dt
@@ -331,43 +351,38 @@ class SQLiteBackend:
         self.conn.commit()
 
 
-# Minimal SQLite DDL mirroring sql/ddl.sql (sqlite-flavoured types).
-_SQLITE_DDL = """
-DROP TABLE IF EXISTS inventory_snapshots; DROP TABLE IF EXISTS line_items;
-DROP TABLE IF EXISTS receipts; DROP TABLE IF EXISTS promotions;
-DROP TABLE IF EXISTS products; DROP TABLE IF EXISTS cashiers; DROP TABLE IF EXISTS stores;
-DROP TABLE IF EXISTS vendors; DROP TABLE IF EXISTS brands; DROP TABLE IF EXISTS categories;
-DROP TABLE IF EXISTS departments;
+def _to_sqlite(sql: str) -> str:
+    """Translate the canonical PostgreSQL DDL to SQLite (CASCADE unsupported)."""
+    sql = sql.replace("BEGIN;", "").replace("COMMIT;", "")
+    return re.sub(r"\bCASCADE\b", "", sql)
 
-CREATE TABLE departments (department_id INTEGER PRIMARY KEY, department_name TEXT NOT NULL UNIQUE);
-CREATE TABLE categories (category_id INTEGER PRIMARY KEY, category_name TEXT NOT NULL,
-  department_id INTEGER NOT NULL REFERENCES departments(department_id));
-CREATE TABLE brands (brand_id INTEGER PRIMARY KEY, brand_name TEXT NOT NULL UNIQUE);
-CREATE TABLE vendors (vendor_id INTEGER PRIMARY KEY, vendor_name TEXT NOT NULL UNIQUE, vendor_phone TEXT);
-CREATE TABLE stores (store_id INTEGER PRIMARY KEY, store_name TEXT NOT NULL, store_address TEXT,
-  store_city TEXT, store_state TEXT, store_zip TEXT);
-CREATE TABLE cashiers (cashier_id INTEGER PRIMARY KEY, cashier_name TEXT NOT NULL UNIQUE);
-CREATE TABLE products (product_upc TEXT PRIMARY KEY, product_name TEXT NOT NULL,
-  brand_id INTEGER NOT NULL REFERENCES brands(brand_id), category_id INTEGER NOT NULL REFERENCES categories(category_id),
-  size TEXT, unit TEXT, vendor_id INTEGER NOT NULL REFERENCES vendors(vendor_id),
-  regular_price REAL NOT NULL, unit_cost REAL NOT NULL, pack_size INTEGER);
-CREATE TABLE promotions (promo_id TEXT PRIMARY KEY, product_upc TEXT NOT NULL REFERENCES products(product_upc),
-  promo_type TEXT NOT NULL, discount_percent REAL NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL);
-CREATE TABLE receipts (receipt_id TEXT PRIMARY KEY, store_id INTEGER NOT NULL REFERENCES stores(store_id),
-  cashier_id INTEGER NOT NULL REFERENCES cashiers(cashier_id), sale_datetime TEXT NOT NULL,
-  tender_type TEXT NOT NULL, customer_segment TEXT NOT NULL);
-CREATE TABLE line_items (line_item_id INTEGER PRIMARY KEY, receipt_id TEXT NOT NULL REFERENCES receipts(receipt_id),
-  line_number INTEGER NOT NULL, product_upc TEXT NOT NULL REFERENCES products(product_upc),
-  quantity INTEGER NOT NULL, promo_id TEXT REFERENCES promotions(promo_id),
-  unit_price_effective REAL NOT NULL, line_subtotal REAL NOT NULL, tax_amount REAL NOT NULL);
-CREATE TABLE inventory_snapshots (snapshot_id INTEGER PRIMARY KEY, snapshot_date TEXT NOT NULL,
-  store_id INTEGER NOT NULL REFERENCES stores(store_id), product_upc TEXT NOT NULL REFERENCES products(product_upc),
-  on_hand_qty INTEGER NOT NULL);
-"""
 
-# Order tables so parents load before children (FK constraints active).
-LOAD_ORDER = ["departments", "categories", "brands", "vendors", "stores", "cashiers",
-              "products", "promotions", "receipts", "line_items", "inventory_snapshots"]
+# Foreign-key edges: child -> parents. Loading order is derived by topological
+# sort, so a re-ordered or new dependency can never silently load out of order.
+FK_DEPS = {
+    "categories": ["departments"],
+    "products": ["brands", "categories", "vendors"],
+    "promotions": ["products"],
+    "receipts": ["stores", "cashiers"],
+    "line_items": ["receipts", "products", "promotions"],
+    "inventory_snapshots": ["stores", "products"],
+}
+
+
+def _load_order(tables):
+    order, placed = [], set()
+    remaining = list(tables)
+    while remaining:
+        progressed = False
+        for t in list(remaining):
+            if all(d in placed for d in FK_DEPS.get(t, [])):
+                order.append(t)
+                placed.add(t)
+                remaining.remove(t)
+                progressed = True
+        if not progressed:
+            raise ValueError(f"cyclic or missing FK dependency among: {remaining}")
+    return order
 
 
 def run(args):
@@ -389,12 +404,13 @@ def run(args):
         backend = SQLiteBackend(args.sqlite_path)
     log.info("backend: %s", backend.name)
 
-    # Create schema (PostgreSQL runs the canonical DDL; SQLite runs the mirror)
+    # Create schema (both backends run the canonical ddl.sql; SQLite first
+    # translates PostgreSQL-only syntax via _to_sqlite).
     backend.execute_script(BASE_DIR / "sql" / "ddl.sql")
 
     # ---- load in dependency order, log before/after counts ----
     log.info("-" * 62)
-    for table_name in LOAD_ORDER:
+    for table_name in _load_order(tables):
         df = tables[table_name]
         backend.load(table_name, df)
         loaded = backend.count(table_name)
