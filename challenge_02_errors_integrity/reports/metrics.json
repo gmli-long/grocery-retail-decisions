@@ -98,7 +98,7 @@
       "column": "product_id",
       "operation": "impute (empirical-frequency sampling)",
       "rows": 28,
-      "rationale": "product_id has no association with any observed column (uniform iid); reassigned by seeded sampling from P(product) to keep the marginal distribution unbiased and remain referentially valid."
+      "rationale": "product_id is independent of every observed column but NOT uniformly distributed, so no deterministic recovery is possible; reassigned by seeded sampling from the empirical frequency P(product) to preserve that marginal distribution and remain referentially valid."
     },
     {
       "step": 9,

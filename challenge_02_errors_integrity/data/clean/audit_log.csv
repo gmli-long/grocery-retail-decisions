@@ -7,5 +7,5 @@ step,table,column,operation,rows,rationale
 5,sales,unit_price,recover = line_amount/qty,56,"unit_price derived exactly from line_amount/qty (no guess, full precision)."
 6,sales,txn_date,recover via txn_id block (ffill),29,txn_date is a step-function of txn_id (contiguous daily blocks); forward-fill on the dense txn_id axis recovers the exact date.
 7,sales,store_id,recover via store block order,13,"store_id=9999 is a malformed key; the store cycle (1..5 per day, contiguous) identically determines the true store from the txn position."
-8,sales,product_id,impute (empirical-frequency sampling),28,product_id has no association with any observed column (uniform iid); reassigned by seeded sampling from P(product) to keep the marginal distribution unbiased and remain referentially valid.
+8,sales,product_id,impute (empirical-frequency sampling),28,product_id is independent of every observed column but NOT uniformly distributed, so no deterministic recovery is possible; reassigned by seeded sampling from the empirical frequency P(product) to preserve that marginal distribution and remain referentially valid.
 9,sales,line_amount,normalize = qty*unit_price,0,re-express line_amount as the canonical qty*unit_price for full self-consistency (only the x100 rows change meaningfully).

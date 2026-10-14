@@ -162,9 +162,9 @@ title_bar(s, "季节模式与外部因子", "周/年节奏 + 节假日脉冲 + �
 pic(s, FIG / "fig4_annual_seasonality.png", Inches(0.55), Inches(1.5), w=Inches(6.3))
 pic(s, FIG / "fig7_holiday_uplift.png", Inches(7.0), Inches(1.5), w=Inches(3.0))
 rect(s, Inches(10.2), Inches(1.55), Inches(2.55), Inches(4.6), LIGHT)
-text(s, Inches(10.4), Inches(1.75), Inches(2.2), Inches(0.6), "价格弹性", size=16, color=NAVY, bold=True)
+text(s, Inches(10.4), Inches(1.75), Inches(2.2), Inches(0.6), "价格-数量相关", size=16, color=NAVY, bold=True)
 text(s, Inches(10.4), Inches(2.35), Inches(2.3), Inches(3.2), "≈ 0", size=30, color=RED, bold=True)
-text(s, Inches(10.4), Inches(3.2), Inches(2.3), Inches(1.6), "|r| < 0.02\n需求由日历驱动\n而非价格",
+text(s, Inches(10.4), Inches(3.2), Inches(2.3), Inches(1.6), "|r| < 0.02\n描述性、非因果\n需求由日历驱动",
      size=12, color=SUB)
 lines(s, Inches(0.55), Inches(5.35), Inches(9.5), Inches(1.6), [
     ("Q4 节假日峰", "  Bakery 最陡峭；节假日销售均值 +12.5%"),

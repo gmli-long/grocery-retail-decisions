@@ -24,8 +24,8 @@ import pandas as pd
 import numpy as np
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_DATA_DIR = (r"C:\Users\21597\.cache\kagglehub\competitions"
-                    r"\challenge-01-spaghetti-schema-2026\Callenge Data Sets\Challenge_01_data_V1_0")
+sys.path.insert(0, str(BASE_DIR))
+from config import DEFAULT_DATA_DIR  # noqa: E402
 
 # DateTime formats differ per sales quarter (documented in readme.txt)
 DT_FORMATS = {

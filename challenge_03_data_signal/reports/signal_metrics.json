@@ -25,7 +25,7 @@
     "2": 0.31762311308721825,
     "3": 0.36246765309525897
   },
-  "price_elasticity_corr": {
+  "price_qty_corr": {
     "Beverages": 0.007,
     "Bakery": -0.014,
     "Meat": 0.02,

@@ -136,8 +136,8 @@ nb1 = [
     code("sp = p.groupby(['store_id','dow'])['sales_revenue'].mean().reset_index()\nlab={1:'Seattle (L)',2:'Portland (M)',3:'Boise (S)'}\nfig, ax = plt.subplots(figsize=(9,3.0))\nfor sid in [1,2,3]:\n    d = sp[sp.store_id==sid].sort_values('dow')\n    ax.plot(d.dow, d.sales_revenue, marker='o', ms=3, color=[NAVY,BLUE,AMBER][sid-1], label=lab[sid])\nax.set_xticks(range(7)); ax.set_xticklabels(['Mon','Tue','Wed','Thu','Fri','Sat','Sun'])\nax.set_title('Store weekly profile (scale differs, shape aligns)')\nax.set_ylabel('Mean revenue ($)'); ax.legend(frameon=False)"),
     md("## 5. 价格信号",
        "",
-       "`unit_price = sales_revenue / sales_qty`。观察价格趋势，并量化「价格-数量」弹性。"),
-    code("qp = p.groupby(['date','category_name'])['unit_price'].mean().reset_index()\nfig, ax = plt.subplots(figsize=(9,3.0))\nfor c in CAT:\n    d = qp[qp.category_name==c]\n    ax.plot(d.date, d.unit_price.rolling(30).mean(), lw=1.1, color=COL[c], label=c)\nax.set_title('Category unit-price trends'); ax.set_ylabel('$/unit'); ax.legend(frameon=False, ncol=4)\n\nfor c in CAT:\n    dd = p[p.category_name==c]\n    r = np.corrcoef(np.log(dd.sales_qty+1), np.log(dd.unit_price))[0,1]\n    print(f'  price-elasticity corr ({c}): {r:+.3f}')"),
+       "`unit_price = sales_revenue / sales_qty`。观察价格趋势，并量化「价格-数量」相关（描述性、非因果）。"),
+    code("qp = p.groupby(['date','category_name'])['unit_price'].mean().reset_index()\nfig, ax = plt.subplots(figsize=(9,3.0))\nfor c in CAT:\n    d = qp[qp.category_name==c]\n    ax.plot(d.date, d.unit_price.rolling(30).mean(), lw=1.1, color=COL[c], label=c)\nax.set_title('Category unit-price trends'); ax.set_ylabel('$/unit'); ax.legend(frameon=False, ncol=4)\n\nfor c in CAT:\n    dd = p[p.category_name==c]\n    r = np.corrcoef(np.log(dd.sales_qty+1), np.log(dd.unit_price))[0,1]\n    print(f'  price-qty corr (descriptive, non-causal) ({c}): {r:+.3f}')"),
     md("## 6. 节假日效应 + 无监督异常检测",
        "",
        "用 STL 残差的 |z|>3.5 做**无监督**异常检测，再与节假日日历交叉验证。"),
@@ -146,7 +146,7 @@ nb1 = [
        "",
        "- 主导周期 **7 天（周）** + **~365 天（年）**，由无监督周期图自动发现；",
        "- 周末抬升、Q4 节假日峰值是年周期主因；节假日当日销售平均 **+12.5%**；",
-       "- **价格近乎无弹性**（相关系数≈0）：需求由日历/节假日驱动，而非价格；",
+       "- **价格-数量相关近乎为零**（描述性、非因果）：需求由日历/节假日驱动；",
        "- 无监督异常检测 18 个异常点中 12 个落在节假日上（精确率 66.7%）。"),
 ]
 

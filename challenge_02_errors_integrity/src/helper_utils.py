@@ -236,9 +236,10 @@ def repair(dfs, rng_seed=42):
     sales.loc[orphans_p, "product_id"] = imputed.astype(int).astype(str)
     rec(8, "sales", "product_id", "impute (empirical-frequency sampling)",
         int(orphans_p.sum()),
-        "product_id has no association with any observed column (uniform iid); "
-        "reassigned by seeded sampling from P(product) to keep the marginal "
-        "distribution unbiased and remain referentially valid.")
+        "product_id is independent of every observed column but NOT uniformly "
+        "distributed, so no deterministic recovery is possible; reassigned by "
+        "seeded sampling from the empirical frequency P(product) to preserve "
+        "that marginal distribution and remain referentially valid.")
 
     # --- 8. finalize dtypes & canonical derived field -----------------------
     out = sales.copy()

@@ -253,7 +253,12 @@ def detect_anomalies(series: pd.Series, period: int = 7, k: float = 3.5) -> pd.D
 # 5. Forecast evaluation
 # --------------------------------------------------------------------------- #
 def forecast_metrics(y_true: np.ndarray | pd.Series, y_pred: np.ndarray | pd.Series) -> dict[str, float]:
-    """MAE, RMSE, MAPE on aligned arrays (MAPE in percent)."""
+    """MAE, RMSE, MAPE on aligned arrays (MAPE in percent).
+
+    MAPE is averaged only where y_true != 0. On this daily-total series every
+    day is non-zero, so no days are dropped; if zero-sales days could occur,
+    switch to sMAPE or report the dropped-day coverage explicitly.
+    """
     yt = np.asarray(y_true, dtype=float)
     yp = np.asarray(y_pred, dtype=float)
     ok = yt != 0

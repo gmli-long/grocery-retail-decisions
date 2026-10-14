@@ -250,12 +250,14 @@ def main():
         p[p.store_id == sid].groupby("date").sales_revenue.sum(), 7)
         for sid in [1, 2, 3]}
 
-    # price elasticity: correlation between unit_price and qty per category (log-log)
-    elast = {}
+    # price-quantity association (NOT causal elasticity): unit_price is derived
+    # as sales_revenue/sales_qty, so qty appears in both variables and the
+    # correlation is descriptive only. No exogenous price exists in this dataset.
+    corr = {}
     for c in CAT_ORDER:
         d = p[p.category_name == c]
         lq, lp = np.log(d.sales_qty + 1), np.log(d.unit_price)
-        elast[c] = round(float(np.corrcoef(lq, lp)[0, 1]), 3)
+        corr[c] = round(float(np.corrcoef(lq, lp)[0, 1]), 3)
 
     metrics = {
         "n_days": int(s.shape[0]),
@@ -265,7 +267,7 @@ def main():
         "seasonal_strength_total": round(strength_total, 3),
         "seasonal_strength_category": strength_cat,
         "seasonal_strength_store": strength_store,
-        "price_elasticity_corr": elast,
+        "price_qty_corr": corr,
         "holiday_stats": hol_stats,
         "anomaly_stats": an_stats,
     }

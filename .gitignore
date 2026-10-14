@@ -10,6 +10,7 @@
 # 2) 仅放行需要公开的内容
 !.gitignore
 !README.md
+!tests/
 !challenge_01_spaghetti_schema/
 !challenge_02_errors_integrity/
 !challenge_03_data_signal/

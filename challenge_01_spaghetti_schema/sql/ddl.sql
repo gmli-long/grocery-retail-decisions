@@ -150,7 +150,7 @@ CREATE TABLE line_items (
 );
 
 -- Monthly on-hand inventory. unit_cost / inventory_cost_value are deliberately
--- NOT stored: they were bit-for-bit equal to products.unit_cost in 2024, so
+-- NOT stored: they were string-identical (byte-for-byte) to products.unit_cost in the source, so
 -- keeping them here would store a duplicate that can drift and contradict the
 -- product master. (If historical cost were needed, promote products.unit_cost
 -- into a slowly-changing cost table — see docs/architecture.md.)

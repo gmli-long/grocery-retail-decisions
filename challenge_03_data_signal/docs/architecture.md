@@ -62,7 +62,7 @@ data/raw/*.csv ──▶ src/helper_utils.py::build_panel ──▶ 日报表面
 
 ## 可复现性契约
 
-- 全流程确定性：SARIMA/SARIMAX 为数值优化，无随机种子；节假日日历手写；无远程下载。
+- 可复现（同一环境）：SARIMA/SARIMAX 为数值优化，无显式随机种子，跨平台可能有浮点级微差；节假日日历手写；无远程下载。
 - 一键重放：`python scripts/run_eda.py && python scripts/run_forecast.py`。
 - 每个输出文件都能追溯到对应脚本与函数；指标以 `reports/*.json` 机器可读形式落地。
 

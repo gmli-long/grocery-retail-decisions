@@ -7,7 +7,7 @@ Design choices (documented in docs/architecture.md):
                                  model *sees* holiday & annual structure the weekly
                                  term cannot reach
   * two naive baselines (persistence, seasonal-naive) anchor the comparison
-  * MAPE reported only on non-zero days
+  * MAPE reported only on non-zero days (every daily-total is non-zero here)
 """
 from __future__ import annotations
 

@@ -13,7 +13,7 @@
 | 5 | sales | unit_price | 精确还原 | 56 | unit_price = line_amount / qty；全精度无猜测 |
 | 6 | sales | txn_date | txn_id 分块前向填充 | 29 | 日期是 txn_id 的单调阶跃函数（每日连续块、60 天 0 反转），前向填充精确还原 |
 | 7 | sales | store_id | 门店日循环序还原 | 13 | store_id=9999 为畸形键；每日门店 1→5 连续循环可唯一确定（原始 14，1 行随重复组移除；2 行在块边界用「后向块」决断） |
-| 8 | sales | product_id | 频率加权采样补值 | 28 | product_id 与任何观测列均不相关（iid 均匀），无法确定性还原；种子化按 P(product) 重分配保持边际分布无偏（原始 29，1 行随重复组移除） |
+| 8 | sales | product_id | 频率加权采样补值 | 28 | product_id 与任何观测列均独立、但边际分布非均匀，无法确定性还原；种子化按 P(product) 重分配保持边际分布无偏（原始 29，1 行随重复组移除） |
 | 9 | sales | line_amount | 规范化 = qty×price | 0 | 结果自洽化，全表不变量恒成立 |
 
 ## 净效应

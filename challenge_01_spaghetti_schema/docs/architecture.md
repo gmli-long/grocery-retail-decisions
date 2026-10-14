@@ -127,7 +127,7 @@ erDiagram
 | 被丢弃列 | 原因 |
 |---|---|
 | `sales.weekend_flag` | 与 `sale_datetime` 100% 一致，属**传递依赖**，可用 `EXTRACT(DOW FROM sale_datetime) IN (0,6)` 即时重算 |
-| `inventory_snapshots.unit_cost / inventory_cost_value` | 探查显示逐位等于 `products.unit_cost` 与 `on_hand_qty × unit_cost`；保留会造成「同一成本两处存储、可能漂移矛盾」 |
+| `inventory_snapshots.unit_cost / inventory_cost_value` | 探查显示在源数据中以字符串逐字节一致于 `products.unit_cost` 与 `on_hand_qty × unit_cost`（非浮点近似）；保留会造成「同一成本两处存储、可能漂移矛盾」 |
 | `promotions.product_name / department_name / brand`、销售表/库存表中的所有重复商品与门店属性 | 冗余副本，落入对应维度 |
 
 ## 3. 严格 3NF 与「分析效率」的刻意折中
